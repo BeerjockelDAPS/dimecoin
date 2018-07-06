@@ -1,238 +1,241 @@
-# 1) Building on Ubuntu with QT5 (dynamic linking)
-The following instructions have been tested on the following distributions:
+UNIX BUILD NOTES
+====================
+Some notes on how to build Dimecoin in Unix.
 
-1. Ubuntu 16.04 (*)
-2. Ubuntu 17.04
-3. Mint 18.3
+Note
+---------------------
+Always use absolute paths to configure and compile dimecoin and the dependencies,
+for example, when specifying the the path of the dependency:
 
-**(*) Please notice**: we experienced a issue on Ubuntu 16.04, where the wallet menu bar and tray icon was not shown due to an incompatibility with Unity window manager. This is not happening on Ubuntu 17.04 where Unity was replaced by Gnome.  
+	../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
 
-## Get the building environment ready
+Here BDB_PREFIX must absolute path - it is defined using $(pwd) which ensures
+the usage of the absolute path.
 
-Open a terminal window. If git is not installed in your system, install it by issuing the following command
-```
-sudo apt-get install git
-```
-Install Linux development tools 
-```
-sudo apt-get install build-essential
-```
+To Build
+---------------------
 
-Clone the dimecoin repository
-
-```
-git clone https://github.com/dime-coin/dimecoin.git
-```
-
-if required, fix the leveldb files permissions
-```
-cd ~/dimecoin/src/leveldb
-chmod +x build_detect_platform
-chmod 775 *
-```
-you may also be required to build leveldb prior to start the wallet build
-```
-make clean
-make libleveldb.a libmemenv.a
-```
-
-Install required libraries
-```
-sudo apt-get install libssl-dev libminiupnpc-dev libboost-all-dev
-```
-
-To build with QT5, you will need these
-```
-sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
-```
-
-Download and build BerkeleyDB 5.0.32.NC
-```
-cd ~/
-wget 'http://download.oracle.com/berkeley-db/db-5.0.32.NC.tar.gz'
-tar -xzvf db-5.0.32.NC.tar.gz
-cd db-5.0.32.NC/build_unix/
-../dist/configure --enable-cxx --disable-shared 
-sudo make install
-```
-## Build the qt wallet application (dimecoin-qt)
-Update dimecoin-qt.pro with the correct include and lib paths for BDB
-```
-cd ~/dimecoin/
-nano dimecoin-qt.pro
-```
-if you built the same version of BDB as above, just add or modify the following lines under ubuntu build section
-```
-##############################################
-# Uncomment to build on Ubuntu
-##############################################
-BOOST_LIB_PATH=/usr/local/BerkeleyDB.5.0/lib
-BDB_INCLUDE_PATH=/usr/local/BerkeleyDB.5.0/include
-```
-Then start the build process:
-```
-cd ~/dimecoin/
-qmake
+```bash
+./autogen.sh
+./configure
 make
+make install # optional
 ```
 
-## Build the headless wallet (dimecoind)
-To export BDB environment variables to customize the location of BDB. If you used the same BDB version mentioned above, then type the following:
-```
-export BDB_INCLUDE_PATH=/usr/local/BerkeleyDB.5.0/include
-export BDB_LIB_PATH=/usr/local/BerkeleyDB.5.0/lib
-```
-then start the build process:
-```
-cd ~/dimecoin/src
-make -f makefile.unix
-```
+This will build dimecoin-qt as well if the dependencies are met.
 
-# 2) Building a static QT5 binary wallet on ubuntu
-The following instructions have been tested on the following distributions:
+Dependencies
+---------------------
 
-1. Ubuntu 16.04.4
-2. Linux Mint 18.3
+These dependencies are required:
 
-The advantage of building the wallet this way is that it will be able to be executed even on a fresh ubuntu installation without adding additional libraries. There will be no dependencies error messages at startup in case some shared libs are missing. The current release was build that way.
+ Library     | Purpose          | Description
+ ------------|------------------|----------------------
+ libssl      | SSL Support      | Secure communications
+ libboost    | Boost            | C++ Library
 
-## Get the building environment ready (same as above)
+Optional dependencies:
 
-Open a terminal window. If git is not installed in your system, install it by issuing the following command
-```
-sudo apt-get install git
-```
-Install Linux development tools 
-```
-sudo apt-get install build-essential libtool automake autotools-dev autoconf pkg-config libgmp3-dev libevent-dev bsdmainutils
-```
-## Compile all dependencies manually and use their static libs
-### Download and build BerkeleyDB 5.0.32.NC
-```
-cd ~/
-wget 'http://download.oracle.com/berkeley-db/db-5.0.32.NC.tar.gz'
-tar -xzvf db-5.0.32.NC.tar.gz
-cd db-5.0.32.NC/build_unix/
-../dist/configure --enable-cxx --disable-shared 
-make
+ Library     | Purpose          | Description
+ ------------|------------------|----------------------
+ miniupnpc   | UPnP Support     | Firewall-jumping support
+ libdb4.8    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
+ qt          | GUI              | GUI toolkit (only needed when GUI enabled)
+ protobuf    | Payments in GUI  | Data interchange format used for payment protocol (only needed when GUI enabled)
+ libqrencode | QR codes in GUI  | Optional for generating QR codes (only needed when GUI enabled)
 
-```
+For the versions used in the release, see [release-process.md](release-process.md) under *Fetch and build inputs*.
 
-### Compiling Boost 1.58
+System requirements
+--------------------
 
-Download Boost 1.58 here : 
-https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz/download<br>
-Put the archive in ~/deps
+C++ compilers are memory-hungry. It is recommended to have at least 1 GB of
+memory available when compiling Dimecoin Core. With 512MB of memory or less
+compilation will take much longer due to swap thrashing.
 
-```
-cd ~/deps
-tar xvfz boost_1_58_0.tar.gz
-cd ~/deps/boost_1_58_0
-./bootstrap.sh
+Dependency Build Instructions: Ubuntu & Debian
+----------------------------------------------
+Build requirements:
 
-./b2 --build-type=complete --layout=versioned --with-chrono --with-filesystem --with-program_options --with-system --with-thread toolset=gcc variant=release link=static threading=multi runtime-link=static stage
+	sudo apt-get install build-essential libtool autotools-dev autoconf pkg-config libssl-dev
 
-```
+for Ubuntu 12.04 and later or Debian 7 and later libboost-all-dev has to be installed:
 
-### Compiling miniupnpc
+	sudo apt-get install libboost-all-dev
 
-Install Miniupnpc. Download it from here http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.9.tar.gz<br>
-and place it in your deps folder, then :
-```
-cd ~/deps
-tar xvfz miniupnpc-1.9.tar.gz
+ db4.8 packages are available [here](https://launchpad.net/~bitcoin/+archive/bitcoin).
+ You can add the repository using the following command:
 
-cd miniupnpc-1.9
-make init upnpc-static
-```
-==> Important : don't forget to rename "miniupnpc-1.9" directory to "miniupnpc"
+        sudo add-apt-repository ppa:bitcoin/bitcoin
+        sudo apt-get update
 
-### Compiling OpenSSL
+ Ubuntu 12.04 and later have packages for libdb5.1-dev and libdb5.1++-dev,
+ but using these will break binary wallet compatibility, and is not recommended.
 
-download 1.0.2g version here : https://www.openssl.org/source/old/1.0.2/openssl-1.0.2g.tar.gz<br>
-place archive in deps folders then :
-```
-tar xvfz openssl-1.0.2g.tar.gz
-cd openssl-1.0.2g
-./config no-shared no-dso
-make depend
-make
-```
+for Debian 7 (Wheezy) and later:
+ The oldstable repository contains db4.8 packages.
+ Add the following line to /etc/apt/sources.list,
+ replacing [mirror] with any official debian mirror.
 
-### Compiling QREncode
+	deb http://[mirror]/debian/ oldstable main
 
-download 3.4.4 vereion here : https://fukuchi.org/works/qrencode/qrencode-3.4.4.tar.gz<br>
-```
-tar xvfz qrencode-3.4.4.tar.gz
-cd qrencode-3.4.4
-configure --enable-static --disable-shared --without-tools
-make
-```
+To enable the change run
 
-### Compiling QT 5.5.0 statically
-Download QT 5.5.0 sources
-https://download.qt.io/archive/qt/5.5/5.5.0/single/qt-everywhere-opensource-src-5.5.0.tar.gz<br>
-Extract in deps folder
-```
-tar xvfz qt-everywhere-opensource-src-5.5.0.tar.gz
-```
-after everything is extracted, create another directory where static libs will be installed. 
-For example, i created ~/deps/Qt/5.4.2_static and used that directory in configure command below :
-```
-cd ~/deps/qt-everywhere-opensource-src-5.5.0
+	sudo apt-get update
 
-./configure -static -opensource -release -confirm-license -no-compile-examples -nomake tests -prefix ~/deps/Qt/5.5.0_static -qt-zlib -qt-libpng -no-libjpeg -qt-xcb -qt-freetype -qt-pcre -qt-harfbuzz -largefile -no-opengl -no-openssl -gtkstyle -skip wayland -skip qtserialport -skip script -skip qtdeclarative -pulseaudio -alsa -c++11 -nomake tools
+for other Debian & Ubuntu (with ppa):
 
-make -j 4
-```
-After it successfuly ends :
-```
+	sudo apt-get install libdb4.8-dev libdb4.8++-dev
+
+Optional:
+
+	sudo apt-get install libminiupnpc-dev (see --with-miniupnpc and --enable-upnp-default)
+
+Dependencies for the GUI: Ubuntu & Debian
+-----------------------------------------
+
+If you want to build Dimecoin-Qt, make sure that the required packages for Qt development
+are installed. Either Qt 4 or Qt 5 are necessary to build the GUI.
+If both Qt 4 and Qt 5 are installed, Qt 4 will be used. Pass `--with-gui=qt5` to configure to choose Qt5.
+To build without GUI pass `--without-gui`.
+
+To build with Qt 4 you need the following:
+
+    sudo apt-get install libqt4-dev libprotobuf-dev protobuf-compiler
+
+For Qt 5 you need the following:
+
+    sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+
+libqrencode (optional) can be installed with:
+
+    sudo apt-get install libqrencode-dev
+
+Once these are installed, they will be found by configure and a dimecoin-qt executable will be
+built by default.
+
+Notes
+-----
+The release is built with GCC and then "strip dimecoind" to strip the debug
+symbols, which reduces the executable size by about 90%.
+
+
+miniupnpc
+---------
+
+[miniupnpc](http://miniupnp.free.fr/) may be used for UPnP port mapping.  It can be downloaded from [here](
+http://miniupnp.tuxfamily.org/files/).  UPnP support is compiled in and
+turned off by default.  See the configure options for upnp behavior desired:
+
+	--without-miniupnpc      No UPnP support miniupnp not required
+	--disable-upnp-default   (the default) UPnP support turned off by default at runtime
+	--enable-upnp-default    UPnP support turned on by default at runtime
+
+To build:
+
+	tar -xzvf miniupnpc-1.6.tar.gz
+	cd miniupnpc-1.6
+	make
+	sudo su
+	make install
+
+
+Berkeley DB
+-----------
+It is recommended to use Berkeley DB 4.8. If you have to build it yourself:
+
+```bash
+BITCOIN_ROOT=$(pwd)
+
+# Pick some path to install BDB to, here we create a directory within the dimecoin directory
+BDB_PREFIX="${BITCOIN_ROOT}/db4"
+mkdir -p $BDB_PREFIX
+
+# Fetch the source and verify that it is not tampered with
+wget 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz'
+echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c
+# -> db-4.8.30.NC.tar.gz: OK
+tar -xzvf db-4.8.30.NC.tar.gz
+
+# Build the library and install to our prefix
+cd db-4.8.30.NC/build_unix/
+#  Note: Do a static build so that it can be embedded into the exectuable, instead of having to find a .so at runtime
+../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
 make install
-```
-### Compiling Dimecoin QT wallet
 
-Clone the dimecoin repository
-```
-git clone https://github.com/dime-coin/dimecoin.git
-```
-if required, fix the leveldb files permissions
-```
-cd ~/dimecoin/src/leveldb
-chmod +x build_detect_platform
-chmod 775 *
-```
-you may also be required to build leveldb prior to start the wallet build
-```
-make clean
-make libleveldb.a libmemenv.a
-```
-go back to dimecoin dir to modify Dimecoin-qt.pro if needed :
-```
-cd ~/dimecoin
-nano dimecoin-qt.pro
-```
-All dependencies dir variables to set according to what have been done above :
-```
-linux {
-	DEPS_PATH = $(HOME)/deps
-  ## comment below dependencies if u don't need to compile a static binary on linux
-	MINIUPNPC_LIB_PATH = $$DEPS_PATH/miniupnpc
-	MINIUPNPC_INCLUDE_PATH = $$DEPS_PATH
-	BOOST_LIB_PATH = $$DEPS_PATH/boost_1_58_0/stage/lib
-	BOOST_INCLUDE_PATH = $$DEPS_PATH/boost_1_58_0
-	BDB_LIB_PATH = $$DEPS_PATH/db-5.0.32.NC/build_unix
-	BDB_INCLUDE_PATH = $$DEPS_PATH/db-5.0.32.NC/build_unix
-	OPENSSL_LIB_PATH = $$DEPS_PATH/openssl-1.0.2g
-	OPENSSL_INCLUDE_PATH = $$DEPS_PATH/openssl-1.0.2g/include
-	QRENCODE_INCLUDE_PATH= $$DEPS_PATH/qrencode-3.4.4
-	QRENCODE_LIB_PATH= $$DEPS_PATH/qrencode-3.4.4/.libs
-}
-```
-After saving the .pro file :
-```
-export PATH=$HOME/deps/Qt/5.5.0_static/bin:$PATH
-qmake
-make
+# Configure Dimecoin Core to use our own-built instance of BDB
+cd $BITCOIN_ROOT
+./configure (other args...) LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/"
 ```
 
-Done!
+**Note**: You only need Berkeley DB if the wallet is enabled (see the section *Disable-Wallet mode* below).
+
+Boost
+-----
+If you need to build Boost yourself:
+
+	sudo su
+	./bootstrap.sh
+	./bjam install
+
+
+Security
+--------
+To help make your dimecoin installation more secure by making certain attacks impossible to
+exploit even if a vulnerability is found, binaries are hardened by default.
+This can be disabled with:
+
+Hardening Flags:
+
+	./configure --enable-hardening
+	./configure --disable-hardening
+
+
+Hardening enables the following features:
+
+* Position Independent Executable
+    Build position independent code to take advantage of Address Space Layout Randomization
+    offered by some kernels. An attacker who is able to cause execution of code at an arbitrary
+    memory location is thwarted if he doesn't know where anything useful is located.
+    The stack and heap are randomly located by default but this allows the code section to be
+    randomly located as well.
+
+    On an Amd64 processor where a library was not compiled with -fPIC, this will cause an error
+    such as: "relocation R_X86_64_32 against `......' can not be used when making a shared object;"
+
+    To test that you have built PIE executable, install scanelf, part of paxutils, and use:
+
+    	scanelf -e ./dimecoin
+
+    The output should contain:
+     TYPE
+    ET_DYN
+
+* Non-executable Stack
+    If the stack is executable then trivial stack based buffer overflow exploits are possible if
+    vulnerable buffers are found. By default, dimecoin should be built with a non-executable stack
+    but if one of the libraries it uses asks for an executable stack or someone makes a mistake
+    and uses a compiler extension which requires an executable stack, it will silently build an
+    executable without the non-executable stack protection.
+
+    To verify that the stack is non-executable after compiling use:
+    `scanelf -e ./dimecoin`
+
+    the output should contain:
+	STK/REL/PTL
+	RW- R-- RW-
+
+    The STK RW- means that the stack is readable and writeable but not executable.
+
+Disable-wallet mode
+--------------------
+When the intention is to run only a P2P node without a wallet, dimecoin may be compiled in
+disable-wallet mode with:
+
+    ./configure --disable-wallet
+
+In this case there is no dependency on Berkeley DB 4.8.
+
+Mining is also possible in disable-wallet mode, but only using the `getblocktemplate` RPC
+call not `getwork`.
+

@@ -1,45 +1,120 @@
-# Welcome to Dimecoin
-![dimecoin](https://avatars1.githubusercontent.com/u/35412734?s=160&v=4)
+Dimecoin Core integration/staging tree
+===================================
 
-Dimecoin is a fast and durable coin great for micro-payments. 
-Dimecoin uses (Quark) algorithm and is minable with ASIC.
-Since the beginning of 2018, it has been revived by a diverse and talented group of community volunteers determined to ensure a successful comeback. 
-As a community based coin, we value transparency and agility. 
-So please join us as we grow, develop, and integrate Dimecoin.
+[![Build Status](https://travis-ci.org/dimecoin/dimecoin.svg?branch=master)](https://travis-ci.org/dimecoin/dimecoin)
 
-Our official social media pages are as follows.
+https://www.dimenet.info
 
-<a href="https://www.twitter.com/dimecoin_">Twitter</a> •
-<a href="https://www.facebook.com/dimecoincommunity">Facebook</a> •
-<a href="https://www.instagram.com/dimecoin_">Instagram</a> •
-<a href="https://www.linkedin.com/company/dimecoin1/">Linkedin</a> •
-<a href="https://www.youtube.com/channel/UCxLM0J9cRw_124wtXIeMzNw">YouTube</a> •
+What is Dimecoin?
+--------------
 
-## Getting started
-The following instructions will get you a copy of the dimecoin source code up and running on your local machine for development and testing purposes. If you are only interested in getting a release of the dimecoin wallet for your system see the Releases section below
+Dimecoin is an experimental new digital currency that enables instant payments to
+anyone, anywhere in the world. Dimecoin uses peer-to-peer technology to operate
+with no central authority: managing transactions and issuing money are carried
+out collectively by the network. Dimecoin Core is the name of open source
+software which enables the use of this currency.
 
-## Releases
+For more information, as well as an immediately useable, binary version of
+the Dimecoin Core software, see https://www.dimenet.info/.
 
-* **Windows**: <a href="https://github.com/dime-coin/dimecoin/releases/tag/1.8.0">Release 1.8.0</a><br/>
-* **Linux**: <a href="https://github.com/dime-coin/dimecoin/releases/tag/1.8.0">Release 1.8.0</a><br/>
+License
+-------
 
-Find all the documentation in the <a href="https://github.com/dime-coin/dimecoin/wiki">Wiki</a>
+Dimecoin Core is released under the terms of the MIT license. See [COPYING](COPYING) for more
+information or see http://opensource.org/licenses/MIT.
 
-## How to build
-This version of the code has been forked from https://github.com/dimecoinproject1/dimecoin 
+Development process
+-------------------
 
-Here are the third party libraries required to build the code and the exact versions used:
+Developers work in their own trees, then submit pull requests when they think
+their feature or bug fix is ready.
 
-* boost 1.58.0<br/>
-* berkeley db 5.0.32.NC<br/>
-* libpng 1.6.12<br/>
-* miniupnpc 1.9<br/>
-* openssl 1.0.2g<br/>
-* qrencode 3.4.4<br/>
+If it is a simple/trivial/non-controversial change, then one of the Dimecoin
+development team members simply pulls it.
 
-If you want to build the wallet from the source, you can follow the instructions below:
+If it is a *more complicated or potentially controversial* change, then the patch
+submitter will be asked to start a discussion (if they haven't already) on the
+[mailing list](https://lists.linuxfoundation.org/mailman/listinfo/dimecoin-dev)
 
-* <a href="doc/build-unix.md">Build on Unix</a><br/>
-* <a href="doc/build-msw.md">Build on Windows</a><br/>
-* <a href="doc/build-osx.md">Build on MacOSX</a><bt/>
+The patch will be accepted if there is broad consensus that it is a good thing.
+Developers should expect to rework and resubmit patches if the code doesn't
+match the project's coding conventions (see [doc/coding.md](doc/coding.md)) or are
+controversial.
 
+The `master` branch is regularly built and tested, but is not guaranteed to be
+completely stable. [Tags](https://github.com/dimecoin/dimecoin/tags) are created
+regularly to indicate new official, stable release versions of Dimecoin.
+
+Testing
+-------
+
+Testing and code review is the bottleneck for development; we get more pull
+requests than we can review and test on short notice. Please be patient and help out by testing
+other people's pull requests, and remember this is a security-critical project where any mistake might cost people
+lots of money.
+
+### Automated Testing
+
+Developers are strongly encouraged to write unit tests for new code, and to
+submit new unit tests for old code. Unit tests can be compiled and run (assuming they weren't disabled in configure) with: `make check`
+
+Every pull request is built for both Windows and Linux on a dedicated server,
+and unit and sanity tests are automatically run. The binaries produced may be
+used for manual QA testing — a link to them will appear in a comment on the
+pull request posted by [DimecoinPullTester](https://github.com/DimecoinPullTester). See https://github.com/TheBlueMatt/test-scripts
+for the build/test scripts.
+
+### Manual Quality Assurance (QA) Testing
+
+Large changes should have a test plan, and should be tested by somebody other
+than the developer who wrote the code.
+See https://github.com/dimecoin/QA/ for how to create a test plan.
+
+Translations
+------------
+
+Changes to translations as well as new translations can be submitted to
+[Dimecoin Core's Transifex page](https://www.transifex.com/projects/p/dimecoin/).
+
+Translations are periodically pulled from Transifex and merged into the git repository. See the
+[translation process](doc/translation_process.md) for details on how this works.
+
+**Important**: We do not accept translation changes as GitHub pull requests because the next
+pull from Transifex would automatically overwrite them again.
+
+Translators should also subscribe to the [mailing list](https://groups.google.com/forum/#!forum/dimecoin-translators).
+
+Development tips and tricks
+---------------------------
+
+**compiling for debugging**
+
+Run configure with the --enable-debug option, then make. Or run configure with
+CXXFLAGS="-g -ggdb -O0" or whatever debug flags you need.
+
+**debug.log**
+
+If the code is behaving strangely, take a look in the debug.log file in the data directory;
+error and debugging messages are written there.
+
+The -debug=... command-line option controls debugging; running with just -debug will turn
+on all categories (and give you a very large debug.log file).
+
+The Qt code routes qDebug() output to debug.log under category "qt": run with -debug=qt
+to see it.
+
+**testnet and regtest modes**
+
+Run with the -testnet option to run with "play dimecoins" on the test network, if you
+are testing multi-machine code that needs to operate across the internet.
+
+If you are testing something that can run on one machine, run with the -regtest option.
+In regression test mode, blocks can be created on-demand; see qa/rpc-tests/ for tests
+that run in -regtest mode.
+
+**DEBUG_LOCKORDER**
+
+Dimecoin Core is a multithreaded application, and deadlocks or other multithreading bugs
+can be very difficult to track down. Compiling with -DDEBUG_LOCKORDER (configure
+CXXFLAGS="-DDEBUG_LOCKORDER -g") inserts run-time checks to keep track of which locks
+are held, and adds warnings to the debug.log file if inconsistencies are detected.
